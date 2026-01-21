@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      - DB_HOST=db
+      - DB_USER=testuser 
+      - DB_NAME=testdb 
+
+    depends_on: 
+      - db
+
+    restart: unless-stopped
+
+  db:
+    image: mysql:latest
+    restart: unless-stopped
+    environment: 
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testdb
+      MSQL_user: testuser
+    ports:
+        - "3307:3306"
+
+volumes:
+  mysql-data:

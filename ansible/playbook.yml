@@ -1,0 +1,83 @@
+---
+- name: Configure VM to run Go application with Docker
+  hosts: app
+  become: true
+
+  vars:
+    app_dir: /opt/app
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required system packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+
+    # ------------------------
+    # Install Docker
+    # ------------------------
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Enable and start Docker
+      service:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    # ------------------------
+    # Install Docker Compose
+    # ------------------------
+    - name: Install Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    # ------------------------
+    # App directory
+    # ------------------------
+    - name: Create application directory
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: docker
+        mode: '0755'
+
+    # ------------------------
+    # Copy app files
+    # ------------------------
+    - name: Copy Dockerfile
+      copy:
+        src: files/Dockerfile
+        dest: "{{ app_dir }}/Dockerfile"
+
+    - name: Copy docker-compose.yml
+      copy:
+        src: files/docker-compose.yml
+        dest: "{{ app_dir }}/docker-compose.yml"
+
+    # ------------------------
+    # Start application
+    # ------------------------
+    - name: Start application stack
+      community.docker.docker_compose:
+        project_src: "{{ app_dir }}"
+        state: present
