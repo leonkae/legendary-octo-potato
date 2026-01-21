@@ -16,6 +16,7 @@ type User struct {
 	Name string `json:"name"`
 }
 
+// defining db
 var db *sql.DB
 
 func main() {
